@@ -1,0 +1,19 @@
+---
+- name: Create new project S3 buckets
+  s3:
+    profile: "{{ owner }}"
+    bucket: "{{ site_prefix }}-{{ item }}"
+    mode: create
+  with_items: modes
+
+- name: Generate Bucket Policy to grant Cross-Account Permissions to mgmt_account
+  local_action: template src=cross_account_perm_s3_policy.json.j2 dest=/tmp/{{ site_prefix }}_cross_account_perm_s3_policy_{{ item }}.json mode=0664
+  with_items: modes
+
+- name: Attach a Bucket Policy to new S3 buckets
+  local_action: command /usr/local/bin/aws s3api put-bucket-policy --bucket {{ site_prefix }}-{{ item }} --policy file:///tmp/{{ site_prefix }}_cross_account_perm_s3_policy_{{ item }}.json --profile "{{ owner }}"
+  with_items: modes
+
+- name: Cleanup local Bucket Policy json files
+  file: path=/tmp/{{ site_prefix }}_cross_account_perm_s3_policy_{{ item }}.json state=absent
+  with_items: modes

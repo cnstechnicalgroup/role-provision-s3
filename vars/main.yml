@@ -1,0 +1,6 @@
+---
+modes:
+  - dev
+  - test
+  - stage
+  - prod
